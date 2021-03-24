@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Linesimplification</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css"/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+  integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+  crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src='https://api.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js'></script>
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+  #Btn1 {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  z-index: 400;
+}
+</style>
+</head>
+<body>
+<div id='map'></div>
+  <div class="leaflet-top leaflet-right" style="pointer-events: auto">
+  <input type="button" id=" Btn1" value="Draw" onclick="draw()">
+  <input type="button" id=" Btn1" value="Simplify" onclick="simplify()">
+  <input type="button" id=" Btn1" value="Clear" onclick="remove()">
+  </div>
+
+
+<script>
+
+var map = L.map('map', {center:[51.05011, -114.08529], zoom:10});
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(map);
+
+var coordinates=[];
+var polyline=L.geoJSON();
+
+
+function draw(){
+  map.zoomControl.disable();
+  map.addEventListener('click',function(e){
+    var latitude=e.latlng.lat;
+        longitude=e.latlng.lng;
+        latlng=[longitude,latitude];
+    coordinates.push(latlng);
+    geojsonFeature = {
+           "type": "Feature",
+           "geometry": {
+             "type": "LineString",
+             "coordinates": coordinates
+           }
+       };
+    polyline.addData(geojsonFeature);
+    polyline.addTo(map);
+  });
+  map.on('dblclick',function(e){
+    map.removeEventListener('click');
+    map.zoomControl.enable();
+  });
+}
+
+function remove(){
+  polyline.clearLayers();
+  map.removeLayer(polyline);
+  coordinates=[];
+}
+
+function simplify(){
+  geojsonFeature2 = {
+         "type": "Feature",
+         "geometry": {
+           "type": "LineString",
+           "coordinates": coordinates
+         },
+     };
+  var options = {tolerance:1,highQuality:false};
+  var simplified=turf.simplify(geojsonFeature2,options);
+  var styling={"color":"#ff3300"};
+  var simline=L.geoJSON(simplified,{style:styling})
+  polyline.addLayer(simline);
+}
+
+
+
+
+</script>
+
+</body>
+</html>
